@@ -97,6 +97,7 @@ int test_floatFloat2Int(unsigned uf) {
   return x;
 }
 unsigned test_floatPower2(int x) {
+    int ori = x;
   float result = 1.0;
   float p2 = 2.0;
   int recip = (x < 0);
@@ -108,6 +109,7 @@ unsigned test_floatPower2(int x) {
     x = -x;
     p2 = 0.5;
   }
+  int t;
   while (x > 0) {
     if (x & 0x1)
       result = result * p2;
