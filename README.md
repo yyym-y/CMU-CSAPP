@@ -113,7 +113,8 @@ Total points: 0/36
 
 同时笔记也会发布到知乎上
 
-.....未完待续
+* CSAPP - 信息的表示和处理 : https://zhuanlan.zhihu.com/p/666331015
+* CSAPP-链接 https://zhuanlan.zhihu.com/p/671477739
 
 
 

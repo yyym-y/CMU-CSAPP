@@ -608,7 +608,7 @@ int setpgid(pid_t pid, pid_t pgid);
 
 
 
-#### /bin/kill 程序发送信号
+#### `/bin/kill` 程序发送信号
 
 `/bin/kill`可以向另外的进程发送**任意的信号**。
 
@@ -655,3 +655,148 @@ int setpgid(pid_t pid, pid_t pgid);
 
 
 
+#### 使用 `kill()` 发送信号
+
+类似于之前提到的 `/bin/kill` 方法
+
+```c
+#include<sys/types.h>
+#include<signal.h>
+
+int kill(pid_t pid, int sig);
+```
+
+- `pid ` $>0$ ,发送信号 `sig` 给进程 `pid`
+- `pid` $<0$ ,发送信号 `sig` 给进程组 `abs(pid)`
+
+如下面的示例 : 
+
+```c
+#include<sys/types.h>
+#include<signal.h>
+#include<stdio.h>
+int main()
+{
+    pid_t pid;
+    if((pid = fork()) == 0) {
+    	printf("only reach here\n");
+        pause();
+        printf("control should never reach here!");
+        _exit(0);
+    }
+    kill(pid, SIGKILL);
+    exit(0);
+}
+// only reach here
+```
+
+可以发现, 下面的 `print` 语句没有执行, 因为被 `SIGKILL ` 杀死了
+
+
+
+#### 使用 `alarm()` 来发送信号
+
+```c
+#include <unistd.h>
+
+unsigned int alarm(unsigned int srcs)
+```
+
+​		`alarm`函数安排内核在 `secs` 秒后发送一个 `SIGALRM` 信号给调用进程。如果 `secs` 是零，那么不会调度安排新的闹钟(alarm)。在任何情况下，对 `alarm` 的调用都将取消任何待处理的(pending)闹钟，并且返回任何待处理的闹钟在被发送前还剩下的秒数(如果这次对 alarm 的调用没有取消它的话);如果没有任何待处理的闹钟，就返回零
+
+
+
+### 接收信号
+
+> 信号的处理时机是在从内核态切换到用户态时，会执行`do_signal()` 函数来处理信号
+
+当内核从一个**异常处理程序**返回，准备将控制传递给进程`p`时，它会检查进程`p`的**未被阻塞的待处理信号的集合**(`pening&~blocked`)
+
+如果这个集合为空，内核将控制传递到p的逻辑控制流的下一条指令。
+
+如果非空，内核选择集合中某个信号k(通常是最小的k)，并且强制p接收k。收到这个信号会触发进程某些行为。一旦进程完成行为，传递到p的逻辑控制流的下一条指令。
+
+每个信号类型都有一个预定义的**默认类型**，以下几种.
+
+- **进程终止**
+- **进程终止并转储存器(dump core)**
+- **进程停止直到被`SIGCONT`信号重启**
+- **进程忽略该信号**
+
+我们可以通过使用 `signal` 函数修改和信号相关联的默认行为。唯一的例外是 `SIGSTOP` 和 `SIGKILL` 它们的默认行为是不能修改的。
+
+```c
+#include<signal.h>
+typedef void (*sighandler_t)(int);
+
+sighandler_t signal(int signum,sighandler_t handler);
+// 返回 : 若成功则为指向前次处理程序的指针，若出错则为 SIG_ERR(不设置 errno
+```
+
+`signal`函数通过下列三种方式之一改变和信号`signum`相关联的行为。
+
+- 如果`handler`是`SIG_IGN`,那么忽略类型为`signum`的信号
+
+- 如果`handler`是`SIG_DFL`,那么类型为`signum`的信号恢复为默认行为。
+
+  否则，`handler` 就是用户定义的函数地址，这个函数称为信号处理程序
+
+  - 只要进程接收到一个类型为**signum**的信号，就会调用handler。
+  - **设置信号处理程序**：把函数传递给`signal` 改变信号的默认行为。
+  - 调用信号处理程序，叫**捕获信号**
+  - 执行信号处理程序，叫**处理信号**
+
+当处理程序执行它的 `return` 语句后，**控制**通常传递回控制流中进程被信号接收中断位置处的指令。
+
+我们简单的演示一下 : 
+
+> 它捕获用户在键盘上输 `Ctrl+C` 时发送的 `SIGINT` 信号, `SIGINT` 的默认行为是立即终止该进程。在这个示例中，我们将默认行为修改为捕获信号，输出一条消息，然后终止该进程
+
+```c
+#include<sys/types.h>
+#include<signal.h>
+#include<stdio.h>
+void sigint_handler(int sig) {
+    printf("\nCaught SIGINT\n");
+    _exit(0);
+}
+int main()
+{
+    if (signal(SIGINT, sigint_handler) == SIG_ERR) {
+        printf("signal error");
+    }
+    pause();
+    return 0;
+}
+```
+
+执行结果如下 : 
+
+```
+[Linux] > ./prog
+^C
+Caught SIGINT
+```
+
+
+
+### 信号处理
+
+当一个程序要捕获多个信号时，一些细微的问题就产生了。
+
+- 待处理信号被阻塞
+
+  - `Unix` 信号处理程序通常会**阻塞** 当前处理程序**正在处理** 的类型的**待处理信号**。
+
+- 待处理信号(被抛弃了)不会排队等待
+
+  - 当有两个同类型信号都是待处理信号时，有一个会被抛弃。
+  - 关键思想：存在一个待处理的信号`k`仅仅表明至少一个一个信号`k`到达过。
+
+- 系统调用可以被中断 (某些系统)
+
+  >  像 `read`,  `wait` 和 `accept` 这样的系统调用潜在的阻塞一段较长的时间，称为慢速系统调用
+  >
+  > 当处理程序捕获一个信号，被中断的慢速系统调用在信号处理程序返回后将不在继续，而是立即返回给用户一个错误条件，并将`errno`设置为`EINTR`。
+
+![singular-16](img/singular-16.png)
