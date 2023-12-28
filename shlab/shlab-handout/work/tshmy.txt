@@ -1,0 +1,4 @@
+#
+# trace06.txt - Forward SIGINT to foreground job.
+#
+tsh> ./myspin 4

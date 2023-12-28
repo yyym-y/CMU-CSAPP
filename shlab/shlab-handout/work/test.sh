@@ -3,22 +3,20 @@
 make 
 cd ../
 make
-mytsh_result="./tsh/tshmy.txt"   
-tshref_result="./tsh/tshref.txt"
+mytsh_result="./work/tshmy.txt"   
+tshref_result="./work/tshref.txt"
 truncate $mytsh_result --size 0 
 truncate $tshref_result --size 0 
 echo -e "testing...\n"
 
-for i in {1..16}; do
-    echo -e "$i begin\n"
+for i in {6..6}; do
     t=""
     if [ $i -ge 10 ]; then t="$i"
     else t="0$i"
     fi
     # echo -e "./sdriver.pl  -t trace$t.txt -s ../tsh/tsh -a \"-p\"" >> result
-    ./sdriver.pl  -t trace$t.txt -s ./tsh/tsh -a "-p" >> "$mytsh_result"
+    ./sdriver.pl  -t trace$t.txt -s ./tsh -a "-p" >> "$mytsh_result"
     ./sdriver.pl  -t trace$t.txt -s ./tshref -a "-p" >> $tshref_result
-    echo -e "finish\n"
 done
 
-diff $tshref_result $mytsh_result   > ./tsh/tshdiff
+diff $tshref_result $mytsh_result   > ./work/tshdiff
