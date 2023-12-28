@@ -9,7 +9,7 @@ truncate $mytsh_result --size 0
 truncate $tshref_result --size 0 
 echo -e "testing...\n"
 
-for i in {6..6}; do
+for i in {11..12}; do
     t=""
     if [ $i -ge 10 ]; then t="$i"
     else t="0$i"

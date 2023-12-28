@@ -1,5 +1,48 @@
 #
-# trace06.txt - Forward SIGINT to foreground job.
+# trace11.txt - Forward SIGINT to every process in foreground process group
 #
-tsh> ./myspin 4
-Job [1] (49834) terminated by signal 2
+tsh> ./mysplit 4
+Job [1] (115846) terminated by signal 2
+tsh> /bin/ps a
+   PID TTY      STAT   TIME COMMAND
+  1817 tty1     Ss+    0:00 -bash
+  7115 pts/2    Ss+    0:00 -bash
+  7131 pts/3    Ss     0:00 -bash
+  7253 pts/3    S+     0:04 top
+ 87980 pts/4    Ss+    0:00 -bash
+ 88010 pts/7    Ss     0:00 -bash
+ 88163 pts/7    S+     0:00 top
+ 91733 pts/0    Ss+    0:00 -bash
+ 91748 pts/1    Ss     0:00 -bash
+ 91826 pts/1    S+     0:08 top
+ 94084 pts/6    Ss     0:00 /bin/bash --init-file /root/.vscode-server/bin/6c3e3dba23e8fadc360aed75ce363ba185c49794/out/vs/workbench/contrib/terminal/browser/media/shellIntegration-bash.sh
+115690 pts/6    S+     0:00 /bin/bash --init-file /root/.vscode-server/bin/6c3e3dba23e8fadc360aed75ce363ba185c49794/out/vs/workbench/contrib/terminal/browser/media/shellIntegration-bash.sh
+115843 pts/6    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace11.txt -s ./tshref -a -p
+115844 pts/6    S+     0:00 ./tshref -p
+115950 pts/6    R      0:00 /bin/ps a
+#
+# trace12.txt - Forward SIGTSTP to every process in foreground process group
+#
+tsh> ./mysplit 4
+Job [1] (116108) stopped by signal 20
+tsh> jobs
+[1] (116108) Stopped ./mysplit 4 
+tsh> /bin/ps a
+   PID TTY      STAT   TIME COMMAND
+  1817 tty1     Ss+    0:00 -bash
+  7115 pts/2    Ss+    0:00 -bash
+  7131 pts/3    Ss     0:00 -bash
+  7253 pts/3    S+     0:04 top
+ 87980 pts/4    Ss+    0:00 -bash
+ 88010 pts/7    Ss     0:00 -bash
+ 88163 pts/7    S+     0:00 top
+ 91733 pts/0    Ss+    0:00 -bash
+ 91748 pts/1    Ss     0:00 -bash
+ 91826 pts/1    S+     0:08 top
+ 94084 pts/6    Ss     0:00 /bin/bash --init-file /root/.vscode-server/bin/6c3e3dba23e8fadc360aed75ce363ba185c49794/out/vs/workbench/contrib/terminal/browser/media/shellIntegration-bash.sh
+115690 pts/6    S+     0:00 /bin/bash --init-file /root/.vscode-server/bin/6c3e3dba23e8fadc360aed75ce363ba185c49794/out/vs/workbench/contrib/terminal/browser/media/shellIntegration-bash.sh
+116105 pts/6    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace12.txt -s ./tshref -a -p
+116106 pts/6    S+     0:00 ./tshref -p
+116108 pts/6    T      0:00 ./mysplit 4
+116109 pts/6    T      0:00 ./mysplit 4
+116225 pts/6    R      0:00 /bin/ps a

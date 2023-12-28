@@ -316,9 +316,9 @@ void sigchld_handler(int sig) {
         sigprocmask(SIG_SETMASK, &mask_all, &mask_pre);
         struct job_t* now_job = getjobpid(jobs, pid);
 
-        if(WIFEXITED(status) && WTERMSIG(status) == SIGINT) {
+        if(WIFEXITED(status) && WTERMSIG(status) == SIGINT && now_job->state != UNDEF) {
             printf("Job [%d] (%d) terminated by signal 2\n",now_job->jid,now_job->pid);
-        }else if (WIFEXITED(status) && WTERMSIG(status) == SIGTSTP) {
+        }else if (WIFEXITED(status) && WTERMSIG(status) == SIGTSTP && now_job->state != ST) {
             printf("Job [%d] (%d) terminated by signal 20\n",now_job->jid,now_job->pid);
             now_job->state = ST;
         }
@@ -336,12 +336,20 @@ void sigchld_handler(int sig) {
  *    to the foreground job.  
  */
 void sigint_handler(int sig) {
-    int olderrno = errno;
-    pid_t pid;
-    if((pid = fgpid(jobs)) != 0) {
-        kill(-pid, SIGINT);
-    }
-    errno = olderrno;
+    pid_t fpid = fgpid(jobs);
+    if(fpid == 0) return;
+
+    sigset_t mask_all, mask_pre;
+    sigfillset(&mask_all); sigemptyset(&mask_pre);
+
+    sigprocmask(SIG_SETMASK, &mask_all, &mask_pre);
+    struct job_t* job = getjobpid(jobs, fpid);
+    int jid = pid2jid(fpid);
+    kill(-fpid, 2);
+    job->state = UNDEF;
+    printf("Job [%d] (%d) terminated by signal 2\n",jid, fpid);
+    sigprocmask(SIG_SETMASK, &mask_pre, NULL);
+    return;
 }
 
 /*
@@ -350,6 +358,20 @@ void sigint_handler(int sig) {
  *     foreground job by sending it a SIGTSTP.  
  */
 void sigtstp_handler(int sig) {
+    pid_t fpid = fgpid(jobs);
+    if(fpid == 0) return;
+
+    sigset_t mask_all, mask_pre;
+    sigfillset(&mask_all); sigemptyset(&mask_pre);
+
+    sigprocmask(SIG_SETMASK, &mask_all, &mask_pre);
+    struct job_t* job = getjobpid(jobs, fpid);
+    int jid = pid2jid(fpid);
+    kill(-fpid, 20);
+    job->state = ST;
+    printf("Job [%d] (%d) stopped by signal 20\n",jid, fpid);
+    sigprocmask(SIG_SETMASK, &mask_pre, NULL);
+    return;
 }
 
 /*********************
