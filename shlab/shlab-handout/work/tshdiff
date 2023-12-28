@@ -1,32 +1,46 @@
-5c5
-< Job [1] (115846) terminated by signal 2
+5d4
+< ./bogus: Command not found
+7c6
+< Job [1] (101476) terminated by signal 2
 ---
-> Job [1] (115698) terminated by signal 2
-20,22c20,22
-< 115843 pts/6    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace11.txt -s ./tshref -a -p
-< 115844 pts/6    S+     0:00 ./tshref -p
-< 115950 pts/6    R      0:00 /bin/ps a
+> Job [1] (101072) terminated by signal 2
+9c8
+< [1] (101620) ./myspin 3 &
 ---
-> 115695 pts/6    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace11.txt -s ./tsh -a -p
-> 115696 pts/6    S+     0:00 ./tsh -p
-> 115841 pts/6    R      0:00 /bin/ps a
-27c27
-< Job [1] (116108) stopped by signal 20
+> [1] (101220) ./myspin 3 &
+11c10
+< [2] (101622) ./myspin 4 &
 ---
-> Job [1] (115954) stopped by signal 20
-29c29
-< [1] (116108) Stopped ./mysplit 4 
+> [2] (101222) ./myspin 4 &
+13,14c12,13
+< [1] (101620) Running ./myspin 3 &
+< [2] (101622) Running ./myspin 4 &
 ---
-> [1] (115954) Stopped ./mysplit 4 
-44,48c44,48
-< 116105 pts/6    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace12.txt -s ./tshref -a -p
-< 116106 pts/6    S+     0:00 ./tshref -p
-< 116108 pts/6    T      0:00 ./mysplit 4
-< 116109 pts/6    T      0:00 ./mysplit 4
-< 116225 pts/6    R      0:00 /bin/ps a
+> [1] (101220) Running ./myspin 3 &
+> [2] (101222) Running ./myspin 4 &
+16c15
+< Job [1] (101620) stopped by signal 20
 ---
-> 115951 pts/6    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace12.txt -s ./tsh -a -p
-> 115952 pts/6    S+     0:00 ./tsh -p
-> 115954 pts/6    T      0:00 ./mysplit 4
-> 115955 pts/6    T      0:00 ./mysplit 4
-> 116104 pts/6    R      0:00 /bin/ps a
+> Job [1] (101220) stopped by signal 20
+18,19c17,18
+< [1] (101620) Stopped ./myspin 3 &
+< [2] (101622) Running ./myspin 4 &
+---
+> [1] (101220) Stopped ./myspin 3 &
+> [2] (101222) Running ./myspin 4 &
+23c22
+< [1] (101620) ./myspin 3 &
+---
+> [1] (101220) ./myspin 3 &
+25,26c24,25
+< [1] (101620) Running ./myspin 3 &
+< [2] (101622) Running ./myspin 4 &
+---
+> [1] (101220) Running ./myspin 3 &
+> [2] (101222) Running ./myspin 4 &
+34d32
+< Job [1] (102175) stopped by signal 20
+36d33
+< [1] (102175) Stopped ./mystop 2
+38d34
+< Job [2] (102356) terminated by signal 2

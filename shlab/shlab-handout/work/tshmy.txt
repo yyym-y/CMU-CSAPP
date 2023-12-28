@@ -1,48 +1,34 @@
 #
-# trace11.txt - Forward SIGINT to every process in foreground process group
+# trace15.txt - Putting it all together
 #
-tsh> ./mysplit 4
-Job [1] (115698) terminated by signal 2
-tsh> /bin/ps a
-   PID TTY      STAT   TIME COMMAND
-  1817 tty1     Ss+    0:00 -bash
-  7115 pts/2    Ss+    0:00 -bash
-  7131 pts/3    Ss     0:00 -bash
-  7253 pts/3    S+     0:04 top
- 87980 pts/4    Ss+    0:00 -bash
- 88010 pts/7    Ss     0:00 -bash
- 88163 pts/7    S+     0:00 top
- 91733 pts/0    Ss+    0:00 -bash
- 91748 pts/1    Ss     0:00 -bash
- 91826 pts/1    S+     0:08 top
- 94084 pts/6    Ss     0:00 /bin/bash --init-file /root/.vscode-server/bin/6c3e3dba23e8fadc360aed75ce363ba185c49794/out/vs/workbench/contrib/terminal/browser/media/shellIntegration-bash.sh
-115690 pts/6    S+     0:00 /bin/bash --init-file /root/.vscode-server/bin/6c3e3dba23e8fadc360aed75ce363ba185c49794/out/vs/workbench/contrib/terminal/browser/media/shellIntegration-bash.sh
-115695 pts/6    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace11.txt -s ./tsh -a -p
-115696 pts/6    S+     0:00 ./tsh -p
-115841 pts/6    R      0:00 /bin/ps a
-#
-# trace12.txt - Forward SIGTSTP to every process in foreground process group
-#
-tsh> ./mysplit 4
-Job [1] (115954) stopped by signal 20
+tsh> ./bogus
+tsh> ./myspin 10
+Job [1] (101072) terminated by signal 2
+tsh> ./myspin 3 &
+[1] (101220) ./myspin 3 &
+tsh> ./myspin 4 &
+[2] (101222) ./myspin 4 &
 tsh> jobs
-[1] (115954) Stopped ./mysplit 4 
-tsh> /bin/ps a
-   PID TTY      STAT   TIME COMMAND
-  1817 tty1     Ss+    0:00 -bash
-  7115 pts/2    Ss+    0:00 -bash
-  7131 pts/3    Ss     0:00 -bash
-  7253 pts/3    S+     0:04 top
- 87980 pts/4    Ss+    0:00 -bash
- 88010 pts/7    Ss     0:00 -bash
- 88163 pts/7    S+     0:00 top
- 91733 pts/0    Ss+    0:00 -bash
- 91748 pts/1    Ss     0:00 -bash
- 91826 pts/1    S+     0:08 top
- 94084 pts/6    Ss     0:00 /bin/bash --init-file /root/.vscode-server/bin/6c3e3dba23e8fadc360aed75ce363ba185c49794/out/vs/workbench/contrib/terminal/browser/media/shellIntegration-bash.sh
-115690 pts/6    S+     0:00 /bin/bash --init-file /root/.vscode-server/bin/6c3e3dba23e8fadc360aed75ce363ba185c49794/out/vs/workbench/contrib/terminal/browser/media/shellIntegration-bash.sh
-115951 pts/6    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace12.txt -s ./tsh -a -p
-115952 pts/6    S+     0:00 ./tsh -p
-115954 pts/6    T      0:00 ./mysplit 4
-115955 pts/6    T      0:00 ./mysplit 4
-116104 pts/6    R      0:00 /bin/ps a
+[1] (101220) Running ./myspin 3 &
+[2] (101222) Running ./myspin 4 &
+tsh> fg %1
+Job [1] (101220) stopped by signal 20
+tsh> jobs
+[1] (101220) Stopped ./myspin 3 &
+[2] (101222) Running ./myspin 4 &
+tsh> bg %3
+%3: No such job
+tsh> bg %1
+[1] (101220) ./myspin 3 &
+tsh> jobs
+[1] (101220) Running ./myspin 3 &
+[2] (101222) Running ./myspin 4 &
+tsh> fg %1
+tsh> quit
+#
+# trace16.txt - Tests whether the shell can handle SIGTSTP and SIGINT
+#     signals that come from other processes instead of the terminal.
+#
+tsh> ./mystop 2
+tsh> jobs
+tsh> ./myint 2

@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 
     /* Redirect stderr to stdout (so that driver will get all output
      * on the pipe connected to stdout) */
-    //dup2(1, 2);
+    dup2(1, 2);
     /* Parse the command line */
     while ((c = getopt(argc, argv, "hvp")) != EOF) {
         switch (c) {
@@ -175,7 +175,6 @@ void eval(char *cmdline) {
     if(argv[0] == NULL) return;
     /* check if the argument is a built-in commend, do it right now if yes */
     if(builtin_cmd(argv) == 1) return;
-
     /* init some sigset to block signal */
     sigset_t mask_all, mask_one, mask_pre;
     sigfillset(&mask_all);
@@ -277,11 +276,50 @@ int builtin_cmd(char **argv)
     return 0;     /* not a builtin command */
 }
 
+int char2num(char* put) {
+    char* tem = put;
+    int len = 0, mul = 1, num = 0, i;
+    while(*tem != '\0') { tem ++; len ++;}
+    for(i = len - 1 ; i >= 0 ; i--, mul *= 10) 
+        num += (put[i] - '0') * mul;
+    return num;
+}
+
 /* 
  * do_bgfg - Execute the builtin bg and fg commands
  */
-void do_bgfg(char **argv) 
-{
+void do_bgfg(char **argv) {
+    if(argv[1] == NULL) {
+        printf("%s command requires PID or %%jobid argument\n",argv[0]);
+        return;
+    }
+    struct job_t* job = NULL;    
+    if(argv[1][0] == '%') {
+        char* num = argv[1]; num++;
+        int jid = char2num(num);
+        job = getjobjid(jobs, jid);
+        if(job == NULL) {
+            printf("%s: No such job\n",argv[1]); return;
+        }
+    }else if(argv[1][0] >= '0' && argv[1][0] <= '9'){
+        int pid = char2num(argv[1]);
+        job = getjobpid(jobs, pid);
+        if(job == NULL) {
+            printf("(%d): No such process\n", pid); return;
+        }
+    }else {
+        printf("%s: argument must be a PID or %%jobid\n",argv[0]);
+        return;        
+    }
+    if(strcmp(argv[0], "bg") == 0) {
+        job->state = BG;
+        printf("[%d] (%d) %s",job->jid,job->pid,job->cmdline);
+        kill(-job->pid,SIGCONT);
+    }else {
+        job->state = FG;
+        kill(-job->pid,SIGCONT);
+        waitfg(job->pid, NULL); 
+    }
     return;
 }
 
@@ -322,7 +360,7 @@ void sigchld_handler(int sig) {
             printf("Job [%d] (%d) terminated by signal 20\n",now_job->jid,now_job->pid);
             now_job->state = ST;
         }
-        
+
         if(now_job->state != ST) deletejob(jobs, pid);
         sigprocmask(SIG_SETMASK, &mask_pre, NULL);
     }

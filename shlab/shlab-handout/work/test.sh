@@ -1,15 +1,13 @@
 
 #! /bin/bash
-make 
 cd ../
-make
 mytsh_result="./work/tshmy.txt"   
 tshref_result="./work/tshref.txt"
 truncate $mytsh_result --size 0 
 truncate $tshref_result --size 0 
 echo -e "testing...\n"
 
-for i in {11..12}; do
+for i in {15..16}; do
     t=""
     if [ $i -ge 10 ]; then t="$i"
     else t="0$i"
