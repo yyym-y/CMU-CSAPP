@@ -286,7 +286,7 @@ int main(int argc, char **argv)
     
     /* Initialize the simulated memory system in memlib.c */
     mem_init(); 
-	
+
     /* Evaluate student's mm malloc package using the K-best scheme */
     for (i=0; i < num_tracefiles; i++) {
 	trace = read_trace(tracedir, tracefiles[i]);
