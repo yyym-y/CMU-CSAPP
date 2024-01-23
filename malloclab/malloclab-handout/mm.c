@@ -73,6 +73,7 @@ static void* coalesce(void* bp);
 static void* find_fit(size_t size);
 static void place(void* bp, size_t size);
 static void printLink(void);
+static void printTag(void* p, char* str);
 
 
 static void* heap_listp;
@@ -136,13 +137,19 @@ static void* coalesce(void* bp) {
     size_t prv_alloc = GET_ALLOC(B2F(B2F(bp)));
     size_t next_alloc = GET_ALLOC(GET_NEXT(B2F(bp)));
     size_t size = GET_SIZE(B2F(bp));
-    if(prv_alloc && next_alloc)
+
+    //printTag(B2F(B2F(bp)), "pre_foot : ");
+    //printTag(GET_HEAD(B2F(B2F(bp))), "pre_head ");
+    //printTag(GET_NEXT(B2F(bp)), "next_head");
+    
+    if(prv_alloc && next_alloc) {
+        //printf("0\n");
         return bp;
-    if(prv_alloc && !next_alloc) {
+    }if(prv_alloc && !next_alloc) {
         //printf("1\n");
         size += GET_SIZE(GET_NEXT(B2F(bp)));
         PUT(B2F(bp), PACK(size, 0));
-        PUT(GET_FOOT(GET_NEXT(B2F(bp))), PACK(size, 0));
+        PUT(GET_FOOT(B2F(bp)), PACK(size, 0));
         return bp;
     }
     if(!prv_alloc && next_alloc) {
@@ -191,11 +198,12 @@ void *mm_malloc(size_t size)
     //printf("extend_size : %d\n", extend_size);
     if((bp = extend_heap(extend_size)) == NULL) 
         return NULL;
-    place(bp, size);
+    return mm_malloc(size);
+    //place(bp, size);
     //printf("\n-----%x-----~2\n", bp);
     //printf("malloc end ~\n");
     //printLink();
-    return bp;
+    //return bp;
 }
 
 static void* find_fit(size_t size) {
@@ -208,10 +216,10 @@ static void* find_fit(size_t size) {
         if(GET_SIZE(ptr) == size + 8 && GET_ALLOC(ptr) != 1) break;
         if(GET_SIZE(ptr) >= size + 16 && GET_ALLOC(ptr) != 1) break;
         ptr = GET_NEXT(ptr); i  ++;
-        if(i == 7) break;
+        //if(i == 1000) break;
         //printf("%x-- %d %d\n", ptr, GET_SIZE(ptr), GET_ALLOC(ptr));
     }
-    //printf("find ptr %x---\n", ptr);
+   // printf("find ptr %x---\n", ptr);
     if((GET_SIZE(ptr) == 0 && GET_ALLOC(ptr) == 1))
         return NULL;
     return F2B(ptr);
@@ -242,6 +250,7 @@ void mm_free(void *ptr)
     PUT(B2F(ptr), PACK(size, 0));
     PUT(GET_FOOT(B2F(ptr)), PACK(size, 0));
     //printLink();
+    //printf("----\n");
     coalesce(ptr);
     //printf("free~\n");
     //printLink();
@@ -271,15 +280,26 @@ static void printLink(void) {
     void* ptr = B2F(heap_listp);
     int i = 0;
     while(!(GET_SIZE(ptr) == 0 && GET_ALLOC(ptr) == 1)) {
-        printf("---------> %x : Size : %d, Alloc : %d\n",
+        printf("---------> %x : Size : %7d, Alloc : %d\n",
                  ptr, GET_SIZE(ptr), GET_ALLOC(ptr));
+        void* foot = GET_FOOT(ptr);
+        if(GET_ALLOC(foot) != GET_ALLOC(ptr) || GET_SIZE(foot) != GET_SIZE(ptr)) {
+            printf("ERROR : HEAD != FOOT\n");
+            printf("head : %d : %d \t foot : %d : %d", GET_SIZE(ptr), GET_ALLOC(ptr), GET_SIZE(foot), GET_ALLOC(foot));
+            assert(0);
+        }
         ptr = GET_NEXT(ptr);
         i ++;
-        if(i == 10) break;
+        if(i == 700) {
+            printf("ERROR \n"); break;
+        }
     }
 }
 
-
+static void printTag(void* p, char* str) {
+    printf("%s : %x, Size : %d, Alloc %d \n", str, p, GET_SIZE(p), GET_ALLOC(p));
+    return ;
+}
 
 
 

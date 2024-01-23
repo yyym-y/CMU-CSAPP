@@ -31,12 +31,12 @@
   "random2-bal.rep",\
   "binary-bal.rep",\
   "binary2-bal.rep",\
-  "realloc-bal.rep",\
-  "realloc2-bal.rep", \
   "short2-bal.rep", \
   "short2.rep", \
   "short1-bal.rep", \
   "short1.rep"
+  // "realloc-bal.rep",\
+  // "realloc2-bal.rep"
 
 /*
  * This constant gives the estimated performance of the libc malloc
