@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 	case 'g': /* Generate summary info for the autograder */
 	    autograder = 1;
 	    break;
-        case 'f': /* Use one specific trace file only (relative to curr dir) */
+    case 'f': /* Use one specific trace file only (relative to curr dir) */
             num_tracefiles = 1;
             if ((tracefiles = realloc(tracefiles, 2*sizeof(char *))) == NULL)
 		unix_error("ERROR: realloc failed in main");
@@ -286,7 +286,7 @@ int main(int argc, char **argv)
     
     /* Initialize the simulated memory system in memlib.c */
     mem_init(); 
-
+	
     /* Evaluate student's mm malloc package using the K-best scheme */
     for (i=0; i < num_tracefiles; i++) {
 	trace = read_trace(tracedir, tracefiles[i]);
