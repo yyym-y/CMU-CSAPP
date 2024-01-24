@@ -74,6 +74,7 @@ static void* find_fit(size_t size);
 static void place(void* bp, size_t size);
 static void printLink(void);
 static void printTag(void* p, char* str);
+static void mm_set(void* old_ptr, void* new_ptr, size_t old_size, size_t new_size);
 
 
 static void* heap_listp;
@@ -261,19 +262,26 @@ void mm_free(void *ptr)
  */
 void *mm_realloc(void *ptr, size_t size)
 {
-    void *oldptr = ptr;
-    void *newptr;
-    size_t copySize;
+    if(ptr == NULL) 
+        return mm_malloc(size);
+    if(size == 0) {
+        mm_free(ptr); return NULL;
+    }
+    size = size % 8 ? (size / 8 + 1) * 8 : size;
+    if(size + 2 * TSIZE == GET_SIZE(B2F(ptr)))
+        return ptr;
     
-    newptr = mm_malloc(size);
-    if (newptr == NULL)
-      return NULL;
-    copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
-    if (size < copySize)
-      copySize = size;
-    memcpy(newptr, oldptr, copySize);
-    mm_free(oldptr);
-    return newptr;
+    void * new_ptr = mm_malloc(size);
+    mm_set(ptr, new_ptr, GET_SIZE(ptr) - 2 * TSIZE, size);
+    mm_free(ptr);
+    return new_ptr;   
+}
+
+static void mm_set(void* old_ptr, void* new_ptr, size_t old_size, size_t new_size) {
+    int i;
+    for(i = 0 ; i < new_size && i < old_size ; i ++) {
+        *((char*)(new_ptr + i)) = *((char*)(old_ptr + i));
+    }
 }
 
 static void printLink(void) {
