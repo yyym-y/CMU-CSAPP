@@ -89,27 +89,18 @@ int mm_init(void)
         fprintf(stderr, "ERROR: mm_init failed. mem_sbrk failed...\n");
         return -1;
     }
-    //printf("\nheap_listp : %x\n", heap_listp);
     PUT(heap_listp, 0); /* init alignment padding */
     PUT(heap_listp + TSIZE, PACK(2 * TSIZE, 1)); /* init prologue header */
-    //printf("+1SIZE : %d --\n", GET_SIZE(heap_listp + TSIZE));
     PUT(heap_listp + 2 * TSIZE, PACK(2 * TSIZE, 1)); /* init prologue footer */
-    //printf("+2SIZE : %d --\n", GET_SIZE(heap_listp + 2 * TSIZE));
     PUT(heap_listp + 3 * TSIZE, PACK(0, 1)); /* init epilogue header */
-    //printf("+3SIZE : %d --\n", GET_SIZE(heap_listp + 3 * TSIZE));
+
     /* move heap_listp to real cell */
-    //printf("real ind : %x ---+\n", heap_listp + TSIZE);
     heap_listp += 2 * TSIZE;
     
-    //printf("\nheap_listp -> size : %d, alloc %d----", GET_SIZE(B2F(heap_listp)), GET_ALLOC(B2F(heap_listp)));
     if(extend_heap(CHUNKSIZE) == NULL) {
         fprintf(stderr, "ERROR: mm_init failed. extend_heap failed...\n");
         return -1;
     }
-    //printf("\nheap_listp -> size : %d, alloc %d----", GET_SIZE(B2F(heap_listp)), GET_ALLOC(B2F(heap_listp)));
-    //printf("\n-----%x----\n", heap_listp);
-    //printf("\n-----%x----\n", mem_heap_lo());
-    //printf("\n-----%x----\n", mem_heap_hi());
     return 0;
 }
 
@@ -125,44 +116,30 @@ static void* extend_heap(size_t bytes) {
     PUT(B2F(begin), PACK(bytes, 0));
     PUT(GET_FOOT(B2F(begin)), PACK(bytes, 0));
     PUT(GET_NEXT(B2F(begin)), PACK(0, 1));
-    //printf("extend_heap end ~~\n");
-    //printLink();
-    void * tem = coalesce(begin);
-    //printf("coalesce end ~\n");
-    //printLink();
-    return tem;
+    return coalesce(begin);
 }
 
 static void* coalesce(void* bp) {
-    //printf("coalesce : %x--\n", bp);
     size_t prv_alloc = GET_ALLOC(B2F(B2F(bp)));
     size_t next_alloc = GET_ALLOC(GET_NEXT(B2F(bp)));
     size_t size = GET_SIZE(B2F(bp));
 
-    //printTag(B2F(B2F(bp)), "pre_foot : ");
-    //printTag(GET_HEAD(B2F(B2F(bp))), "pre_head ");
-    //printTag(GET_NEXT(B2F(bp)), "next_head");
     
     if(prv_alloc && next_alloc) {
-        //printf("0\n");
         return bp;
     }if(prv_alloc && !next_alloc) {
-        //printf("1\n");
         size += GET_SIZE(GET_NEXT(B2F(bp)));
         PUT(B2F(bp), PACK(size, 0));
         PUT(GET_FOOT(B2F(bp)), PACK(size, 0));
         return bp;
     }
     if(!prv_alloc && next_alloc) {
-        //printf("2\n");
         bp = GET_HEAD(B2F(B2F(bp)));
-        //printf("tem0 : %x\n", bp);
         size += GET_SIZE(bp);
         PUT(bp, PACK(size, 0));
         PUT(GET_FOOT(bp), PACK(size, 0));
         return F2B(bp);
     }
-    //printf("3\n");
     size += GET_SIZE(GET_NEXT(B2F(bp)));
     bp = GET_HEAD(B2F(B2F(bp)));
     size += GET_SIZE(bp);
@@ -177,50 +154,29 @@ static void* coalesce(void* bp) {
  */
 void *mm_malloc(size_t size)
 {
-    //printf("malloc begin~~~ \n");
-    //printLink();
-    //printf("ori_size = %d---\n", size);
     if(size <= 0) return NULL;
     if(size < 8) size = 8;
     
     size = size % 8 ? (size / 8 + 1) * 8 : size;
-    //printf("change_size = %d ---\n", size);
     char* bp;
-    //printf("need ptr : %x---\n", F2B(heap_listp));
-    //printf("size : %d, alloc %d --\n", GET_SIZE(F2B(heap_listp)), GET_ALLOC(F2B(heap_listp)));
     if((bp = find_fit(size)) != NULL) {
         place(bp, size);
-        //printf("\n-----%x-----~1\n", bp);
-        //printf("malloc end ~\n");
-        //printLink();
         return bp;
     }
     size_t extend_size = MAX(size, CHUNKSIZE);
-    //printf("extend_size : %d\n", extend_size);
     if((bp = extend_heap(extend_size)) == NULL) 
         return NULL;
     return mm_malloc(size);
-    //place(bp, size);
-    //printf("\n-----%x-----~2\n", bp);
-    //printf("malloc end ~\n");
-    //printLink();
-    //return bp;
 }
 
 static void* find_fit(size_t size) {
     void* ptr = B2F(heap_listp);
-    //printf("ptr : %x\n", ptr);
-    //printf("search-begin -> size : %d, alloc %d----\n", GET_SIZE(ptr), GET_ALLOC(ptr));
-    //printf("size : %d -\n", size);
     int i = 0;
     while(!(GET_SIZE(ptr) == 0 && GET_ALLOC(ptr) == 1)) {
         if(GET_SIZE(ptr) == size + 8 && GET_ALLOC(ptr) != 1) break;
         if(GET_SIZE(ptr) >= size + 16 && GET_ALLOC(ptr) != 1) break;
         ptr = GET_NEXT(ptr); i  ++;
-        //if(i == 1000) break;
-        //printf("%x-- %d %d\n", ptr, GET_SIZE(ptr), GET_ALLOC(ptr));
     }
-   // printf("find ptr %x---\n", ptr);
     if((GET_SIZE(ptr) == 0 && GET_ALLOC(ptr) == 1))
         return NULL;
     return F2B(ptr);
@@ -246,15 +202,10 @@ static void place(void* bp, size_t size) {
  */
 void mm_free(void *ptr)
 {
-    //printf("free %x %x\n", ptr, B2F(ptr));
     size_t size = GET_SIZE(B2F(ptr));
     PUT(B2F(ptr), PACK(size, 0));
     PUT(GET_FOOT(B2F(ptr)), PACK(size, 0));
-    //printLink();
-    //printf("----\n");
     coalesce(ptr);
-    //printf("free~\n");
-    //printLink();
 }
 
 /*

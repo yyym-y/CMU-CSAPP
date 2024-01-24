@@ -125,3 +125,5 @@ Total points: 0/36
 * datalab   2023 - 11 - 10 【笔记待定】
 * bomblab   2023 - 11 - 23 【笔记待定, 彩蛋没有拆除】
 * shlab 2023 - 12 - 28
+* cachelab 2024 - 1 - 19
+* malloclab 2024 - 1 - 24 【未优化】
