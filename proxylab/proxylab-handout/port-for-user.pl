@@ -23,7 +23,7 @@ sub hashname {
     $hash = hex($hash);
     $port = $hash % ($maxport - $minport) + $minport;
     $port = $port & 0xfffffffe;
-    print "$name: $port\n";
+    print "$port";
 }
 
 
