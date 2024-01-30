@@ -127,3 +127,4 @@ Total points: 0/36
 * shlab 2023 - 12 - 28
 * cachelab 2024 - 1 - 19
 * malloclab 2024 - 1 - 24 【未优化】
+* proxylab 2024 - 1 - 30
