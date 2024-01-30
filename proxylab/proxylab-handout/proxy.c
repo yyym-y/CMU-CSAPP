@@ -7,12 +7,13 @@
 #define MAXLEN 1024
 #define SBUFSIZE 32
 #define NTHREADS 8
+#define MAX_CACHE_LINE 32
 typedef struct sockaddr SA;
 
 /* You won't lose style points for including this long line in your code */
 static const char *user_agent_hdr = "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 Firefox/10.0.3\r\n";
 
-/* sbuf struct and function */
+/* sbuf struct and functions */
 typedef struct {
     int* buf;
     int n;
@@ -28,11 +29,42 @@ void sbuf_deinit(sbuf_t* sp);
 void sbuf_insert(sbuf_t* sp, int item);
 int sbuf_remove(sbuf_t* sp);
 
+/* link struct and functions */
+struct Node {
+    int element;
+    struct Node* next;
+    struct Node* pre;
+};
+
+struct Node* getNewLinkNode();
+void insertFront(struct Node* head, int ele);
+void deleteNode(struct Node* address);
+
+/* Cache struct and functions */
+struct CacheLine {
+    int flag;
+    unsigned long long int hash;
+    char url[MAXLEN];
+    char words[MAX_OBJECT_SIZE];
+    struct Node* addr;
+};
+struct Cache {
+    struct CacheLine lines[MAX_CACHE_LINE];
+    struct Node* head;
+}cache;
+
+void cache_init(struct Cache* cache);
+char* readCache(char* url);
+void writeCache(char* url, char* content);
+unsigned long long int BKDRHash(char* put);
+void writeLine(char* url, char* content,
+               int i, unsigned long long int H);
+
 
 /* ---------- my function ---------- */
 void doit(int connfd);
 void parseHost(char* buf, char* host, char* port);
-void connectAndReturn(char* buf, int clientfd, int connfd);
+void connectAndReturn(char* buf, int clientfd, int connfd, char* url);
 void parseUri(rio_t* rio, char* buf);
 void parsePath(char* path, char* ori);
 void* thread(void* vargp);
@@ -75,6 +107,8 @@ int main(int argc, char** argv)
     fprintf(stdout, "open proxy port is %s....\n", listenPort);
     listenfd = Open_listenfd(listenPort);
 
+    cache_init(&cache); /* cache init */
+
     /* prethreading */
     sbuf_init(&sbuf, SBUFSIZE);
     int i;
@@ -112,6 +146,14 @@ void doit(int connfd) {
     printf("Require headers:\n");
     printf("%s", buf);
     sscanf(buf, "%s %s %s", method, url, version);
+
+    /* read from cache */
+    char* cacheWord;
+    if((cacheWord = readCache(url)) != NULL) {
+        Rio_writen(connfd, cacheWord, strlen(cacheWord));
+        return;
+    }
+
     parseUri(&rio, buf);
     printf("%s", buf);
 
@@ -132,7 +174,7 @@ void doit(int connfd) {
     /* send info to service */
     int clientfd;
     clientfd = Open_clientfd(host, port);
-    connectAndReturn(buf, clientfd, connfd);
+    connectAndReturn(buf, clientfd, connfd, url);
 }
 
 void parseHost(char* buf, char* host, char* port) {
@@ -149,18 +191,19 @@ void parseHost(char* buf, char* host, char* port) {
     port[i] = '\0';
 }
 
-void connectAndReturn(char* buf, int clientfd, int connfd) {
+void connectAndReturn(char* buf, int clientfd, int connfd, char* url) {
     rio_t rio;
     Rio_readinitb(&rio, clientfd);
     Rio_writen(clientfd, buf, strlen(buf));
-    printf("----\n");
+    char content[MAX_OBJECT_SIZE];
 
     size_t n;
-    //回复给客户端
     while ((n = Rio_readlineb(&rio, buf, MAXLINE)) != 0) {
         printf("proxy received %d bytes,then send\n", (int)n);
         Rio_writen(connfd, buf, n);
+        sprintf(content, "%s%s", content, buf);
     }
+    writeCache(url, content);
     Close(clientfd);
 }
 
@@ -210,4 +253,103 @@ int sbuf_remove(sbuf_t* sp) {
     V(&sp->mutex); /* Unlock the buffer */ 
     V(&sp->slots); /* Announce available slot */ 
     return item;
+}
+
+/* link function */
+struct Node* getNewLinkNode() {
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+    if(newNode == NULL) {
+        printf("malloc crash\n"); return NULL;
+    }
+    newNode->next = NULL; newNode->element = 0; newNode->pre = NULL;
+    return newNode;
+}
+
+void insertFront(struct Node* head, int ele) {
+    struct Node* next = head->next;
+    struct Node* newNode = getNewLinkNode();
+    newNode->element = ele;
+    newNode->next = next;
+    newNode->pre = head;
+    head->next = newNode;
+    if(next == NULL) return;
+    next->pre = newNode;
+}
+
+void deleteNode(struct Node* address) {
+    if(address == NULL) return;
+    struct Node* front = address->pre;
+    if(front == NULL) return;
+    struct Node* back = address->next;
+    front->next = back;
+    if(back != NULL) back->pre = front;
+    free(address);
+}
+
+// testTool : print all ele;
+void printLink(struct Node* head) {
+    while(head->next != NULL) {
+        head = head->next;
+        printf("%d ", head->element);
+    }
+    printf("\n");
+}
+
+/* Cache functions */
+void cache_init(struct Cache* cache) {
+    cache->head = getNewLinkNode();
+    int i;
+    for(i = 0 ; i < MAX_CACHE_LINE ; i ++) {
+        cache->lines[i].flag = 0;
+        cache->lines[i].addr = NULL;
+    }
+}
+
+char* readCache(char* url) {
+    unsigned long long int H = BKDRHash(url);
+    int i;
+    for(i = 0 ; i < MAX_CACHE_LINE ; i ++) {
+        if(cache.lines[i].flag == 0) continue;
+        if(cache.lines[i].hash != H) continue;
+        if(strcmp(url, cache.lines[i].url) != 0) continue;
+        deleteNode(cache.lines[i].addr);
+        insertFront(cache.head, i);
+        cache.lines[i].addr = cache.head->next;
+        return cache.lines[i].words;
+    }
+    return NULL;
+}
+
+void writeCache(char* url, char* content) {
+    unsigned long long int H = BKDRHash(url);
+    int i;
+    for(i = 0 ; i < MAX_CACHE_LINE ; i ++) {
+        if(cache.lines[i].flag == 0) {
+            writeLine(url, content, i, H);
+            return;
+        }
+    }
+    struct Node* tem = cache.head;
+    while(tem->next != NULL) tem = tem->next;
+    int ele = tem->element;
+    deleteNode(tem);
+    writeLine(url, content, ele, H);
+}
+
+void writeLine(char* url, char* content,
+               int i, unsigned long long int H) {
+    cache.lines[i].flag = 1;
+    cache.lines[i].hash = H;
+    strcpy(cache.lines[i].url, url);
+    strcpy(cache.lines[i].words, content);
+    insertFront(cache.head, i);
+    cache.lines[i].addr = cache.head->next;
+}
+
+unsigned long long int BKDRHash(char* put){
+    unsigned long long int P = 131, H = 0;
+    int temp, len = strlen(put);
+    for(temp = 0 ; temp < len ; temp++)
+        H = H * P + put[temp];
+    return H;
 }
