@@ -29,7 +29,7 @@ yas.o: yas.c yas.h isa.h
 	$(CC) $(CFLAGS) -c yas.c
 
 yas: yas.o yas-grammar.o isa.o
-	$(CC) $(CFLAGS) yas-grammar.o yas.o isa.o ${LEXLIB} -o yas
+	$(CC) $(CFLAGS) yas-grammar.o yas.o isa.o -L/lib64 /lib64/libflite.so.1 -o yas
 
 yis.o: yis.c isa.h
 	$(CC) $(CFLAGS) -c yis.c
