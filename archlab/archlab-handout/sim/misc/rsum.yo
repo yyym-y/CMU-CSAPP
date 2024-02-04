@@ -1,0 +1,41 @@
+                            | # Execution begins at address 0
+0x000:                      |     .pos 0
+0x000: 30f40002000000000000 |     irmovq stack, %rsp      # Set up stack pointer
+0x00a: 804800000000000000   |     call main               # Execute main program
+0x013: 00                   |     halt                    # Terminate program
+                            | 
+                            | # Sample linked list 
+0x018:                      | .align 8 
+0x018:                      | ele1: 
+0x018: 0a00000000000000     |     .quad 0x00a 
+0x020: 2800000000000000     |     .quad ele2
+                            | 
+0x028:                      | ele2: 
+0x028: b000000000000000     |     .quad 0x0b0 
+0x030: 3800000000000000     |     .quad ele3 
+                            |     
+0x038:                      | ele3: 
+0x038: 000c000000000000     |     .quad 0xc00 
+0x040: 0000000000000000     |     .quad 0
+                            | 
+0x048:                      | main:
+0x048: 30f71800000000000000 |     irmovq ele1, %rdi        # Move head node to %rdi as sum function input
+0x052: 30f00000000000000000 |     irmovq $0, %rax          # set val = %rax = 0
+0x05c: 806600000000000000   |     call rsum                # Call rsum function
+0x065: 90                   |     ret
+                            | 
+0x066:                      | rsum:
+0x066: 6277                 |     andq %rdi, %rdi          # Check node = %rdi if equal to 0
+0x068: 747200000000000000   |     jne addFunc              # Call addFunc
+0x071: 90                   |     ret
+                            | 
+0x072:                      | addFunc:
+0x072: 50a70000000000000000 |     mrmovq (%rdi), %r10      # Get node value
+0x07c: 60a0                 |     addq %r10, %rax          # Add node value
+0x07e: 50770800000000000000 |     mrmovq 8(%rdi), %rdi     # node to node.next
+0x088: 806600000000000000   |     call rsum                # call rsum
+0x091: 90                   |     ret
+                            | 
+                            | # Stack starts here and grows to lower addresses
+0x200:                      |         .pos 0x200
+0x200:                      | stack:

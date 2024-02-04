@@ -1,0 +1,51 @@
+# Execution begins at address 0
+    .pos 0
+    irmovq stack, %rsp      # Set up stack pointer
+    call main               # Execute main program
+    halt                    # Terminate program
+
+.align 8 
+# Source block 
+src: 
+    .quad 0x00a
+    .quad 0x0b0 
+    .quad 0xc00 
+
+# Destination block 
+dest: 
+    .quad 0x111 
+    .quad 0x222 
+    .quad 0x333
+
+main:
+    irmovq src, %rdi        # Move src to %rdi for first argument
+    irmovq dest, %rsi       # Move dest to %rsi for second argument
+    irmovq $3, %rdx         # Move Len = 3 to %rdx for third argument
+    call copy               # Call copy function
+    ret
+
+copy:
+    irmovq $0, %rax         # Set result = %rax = 0
+    call test               # Call test function
+    ret
+
+doit:
+    irmovq $8, %r11         # %r11 = 8
+    irmovq $1, %r12         # %r12 = 1
+    mrmovq (%rdi), %r10     # save *src = %r10
+    addq %r11, %rdi         # src ++ = %rdi + 8
+    rmmovq %r10, (%rsi)     # *dest = val = %r10
+    addq %r11, %rsi         # dest ++ = %rsi + 8
+    xorq %r10, %rax         # result ^= val
+    subq %r12, %rdx         # len = %rdx --
+
+test:
+    irmovq $0, %r11
+    addq %r11, %rdx         # nop
+    jg doit                 # jump to doit block
+    ret
+
+
+# Stack starts here and grows to lower addresses
+        .pos 0x200
+stack:
