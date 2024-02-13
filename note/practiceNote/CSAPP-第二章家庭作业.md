@@ -309,3 +309,186 @@ int saturating_add(int x, int y) {
 }
 ```
 
+
+
+## 作业 2.74
+
+```c
+int tsub_ok(int x, int y) {
+    int res = 1;
+    (y == (unsigned)-1) && (res = 0); // y equal to INT_MIN must overflow
+    
+    int sub = x - y;
+    (x > 0) && (y < 0) && (sub < 0) && (res = 0); // positive overflow
+    (x < 0) && (y > 0) && (sub > 0) && (res = 0); // negtive overflow
+
+    return res;
+}
+```
+
+
+
+## 作业 2.75
+
+我们给定长度为 $w$ 的向量 $\overrightarrow{x}$ ,  $\overrightarrow{y}$  , 用这两个向量表示的无符号整数为 $x^\prime$ 和 $y^\prime$ , 表示的补码整数为 $x$ 和 $y$
+
+我们知道 $x \times y$ 会产生 $0 \sim 2w$ 位的结果, 对于低 $w$ 位, 其结果为 $(x \times y) \bmod 2^w$
+
+同理可得, 对于高 $w$ 位, 其结果为 $(x \times y) \div 2^w$ , 对于 `unsigned_high_prod` 函数, 我们要求的是 $(x^\prime \times y^\prime) \div 2^w$
+
+我们直接套用书上的公式 : 
+$$
+(x^\prime \times y^\prime) \div 2^w = [(x + x_{w-1}2^w) \times (y + y_{w - 1}2^w)] \div 2^w
+$$
+进一步简化可得 : 
+$$
+(x^\prime \times y^\prime) \div 2^w = [x \times y + 2^w \cdot (x \cdot y_{w-1} + y\cdot x_{w-1}) + 2^{2w}\cdot x_{w-1} \cdot y_{w-1}] \div 2^w
+$$
+
+我们将 $2^w$ 除进方括号内
+$$
+(x^\prime \times y^\prime) \div 2^w = (x \times y) \div 2^w + (x \cdot y_{w-1} + y\cdot x_{w-1}) + 2^{w}\cdot (x_{w-1} \cdot y_{w-1})
+$$
+
+我们分析一下 :
+
+ $(x \times y) \div 2^w$ 的结果为 `signed_high_prod` 的结果
+
+$2^{w}\cdot (x_{w-1} \cdot y_{w-1})$ 超过了 $w$ 位可以被直接舍去
+
+所以我们可以得到下面的代码 : 
+
+```c
+int signed_high_prod(int x, int y) {
+    return (int64_t) x * y >> 32;
+}
+unsigned unsigned_high_prod(unsigned x, unsigned y) {
+    int w = sizeof(int) << 3;
+    int x_mask = ((int)x) >> (w - 1); // x_{w - 1}, change form to 111...1 or 000...0
+    int y_mask = ((int)y) >> (w - 1); // y_{w - 1}
+    return signed_high_prod(x, y) + (x & y_mask) + (y & x_mask);
+}
+```
+
+
+
+## 作业 2.76
+
+```c
+void *calloc(size_t nmemb, size_t size) {
+    int tem = 0; // any number is ok
+    void* ptr = &tem;
+    ((nmemb & size) == 0) && (ptr = NULL); // nmemb or size equal to 0, ptr = NULL
+    
+    size_t buf_size = nmemb * size;
+    (nmemb != buf_size / size) && (ptr = NULL); // if overflow set ptr = NULL
+
+    (ptr) && (ptr = malloc(buf_size)); // if ptr != NULL, malloc memory
+    (ptr) && (memset(ptr, 0, buf_size)); // check twice to make sure malloc success
+
+    return ptr;
+}
+```
+
+
+
+## 作业 2.77
+
+$K = 17 = [0001 0001]$ 
+
+> `a * 17 = (a << 4) + a`
+
+$K=-7 = [1111\dots1001]$
+
+> `a * (-7) = a - (a << 3)`
+
+$K = 60 = [0011 1100]$
+
+> `a * 60 = (a << 6) - (a << 2)`
+
+$K = -112 = [1111\dots 1001 0000]$
+
+> `a * (-112) = (a << 4) - (a << 7)`
+
+
+
+## 作业 2.78
+
+```c
+int divide_power2(int x, int k) {
+    int mask = x >> ((sizeof(int) << 3) - 1) & 1;
+    int bias = (mask << k) - 1;
+    return (x + bias) >> k;
+}
+```
+
+
+
+## 作业 2.79
+
+```c
+int mul3div4(int x) {
+    x = (x << 1) + x;
+    int k = 2;
+    int mask = x >> ((sizeof(int) << 3) - 1) & 1;
+    int bias = (mask << k) - 1;
+    return (x + bias) >> k;
+}
+```
+
+
+
+## 作业 2.80
+
+// 别问, 抄的, 不想思考了, 鬼知道题目要求的顺序是什么, 开摆...打瓦去了...
+
+```c
+int threefourths(int x) {
+    int low_2_bit_x = x & 0x3;
+    int high_bit_x = x & ~0x3;
+    int bias = (x >> (w - 1)) & 0x3;
+    high_bit_x = (high_bit_x >> 2) + (high_bit_x >> 1);
+    low_2_bit_x += low_2_bit_x << 1;
+    low_2_bit_x = (low_2_bit_x + bias) >> 2;
+    return high_bit_x + low_2_bit_x;
+}
+```
+
+
+
+## 作业 2.81
+
+$A :$ `(unsigned)-1 << k`
+
+$B :$ `0x0 | (0x1 << j)`
+
+
+
+## 作业 2.82
+
+$A :$ 错误的
+
+> 当 $x = \mathrm{INT\_MIN}$ , $y$ 为任意负数的时候 (假设 $y = -1$)
+>
+> $(x < y) = 1$ , 但是 $(-x > -y) = 0$ , 应为 $(\mathrm{INT\_MIN} < -1)$
+
+$B :$ 正确的
+
+$C :$ 正确的
+
+> 注意 : $\sim x + x + 1 = 0 \Rightarrow \sim x = -x -1$
+>
+> $\sim x + \sim y + 1 = -x -1 -y-1+1 = -(x + y) - 1$
+>
+> $= \sim(x + y)$
+
+$D :$ 正确的
+
+> 有符号整数与无符号整数具有相同的位级表现
+
+$E :$ 正确的
+
+
+
+## 作业 2.83
+
