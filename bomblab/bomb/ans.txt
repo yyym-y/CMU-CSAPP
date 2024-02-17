@@ -1,0 +1,19 @@
+bomb1 :
+Border relations with Canada have never been better.
+
+bomb2 :
+1 2 4 8 16 32
+
+bomb3 :
+0 207
+
+bomb4 :
+7 0
+
+bomb5 :
+IONEFG
+
+bomb6 :
+4 3 2 1 6 5
+
+DrEvil
