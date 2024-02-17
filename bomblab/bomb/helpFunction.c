@@ -393,3 +393,45 @@ void phase_defused() {  // 简易版
     
     secret_phase();
 }
+
+void secret_phase(input) {
+    // 输入字符串的起始地址在rax中
+    char* rax = read_line();
+    int rdx = 10;
+    int rsi = 0;
+    // 将字符串转化为整数返回到 rax 中
+    int rax = strtol(rax);
+    int rbx = rax;
+    rax = rax - 1;
+    if(rax > 1000)
+        explode_bomb();
+    
+    rsi = rbx;
+    int rdi = 0x6030f0;
+    int eax = fun7(rdi, rsi); // 0x6030f0, [input]
+    if(eax != 2)
+        explode_bomb();
+
+    // "Wow! You've defused the secret stage!"
+    rdi = 0x402438;
+}
+
+int fun7(void* rdi, int rsi) {
+    if(rsi == 0) 
+        return 0xFFFFFFFF;
+    
+    int rdx = *(int*)(rdi);
+    if(rdx <= rsi) {
+        if(rdx == rsi) return 0;
+        
+        rdi = * (rdi + 16); // rdi 变成了右节点的地址
+        int rax = fun7(rdi, rsi);
+        return 2 * rax + 1;
+    }
+
+    rdi = *(rdi + 8); // rdi 变成了左节点的地址
+    int rax = fun7(rdi, rsi);
+    return rax * 2;
+}
+// 先向左, 再向右, 最后相等返回 0  -> < > =
+// < 36 > 8 => 22

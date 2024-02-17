@@ -16,4 +16,6 @@ IONEFG
 bomb6 :
 4 3 2 1 6 5
 
-DrEvil
+bomb7:
+// 当boom4 输入的结果是 "7 0 DrEvil" 的时候触发
+22

@@ -133,9 +133,11 @@ exit
 
   > 完成 datalab 全部内容	`2023-11-11`
 
-- [x] **bomblab**          ${\color{Orange} 85.7}$ / ${\color{red} 100}$
+- [x] **bomblab**          ${\color{Orange} 100}$ / ${\color{red} 100}$
 
-  > bomblab 基础炸弹全部拆除 [最后的菜单没有拆除]
+  > bomblab 基础炸弹全部拆除 [最后的菜单没有彩蛋]
+  >
+  > 重新拆除所有站点 [包括最后的彩蛋]     `2024-2-18`
 
 - [ ] **attacklab**         ${\color{Orange} 0}$ / ${\color{red} 100}$
 

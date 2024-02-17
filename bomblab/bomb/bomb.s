@@ -635,18 +635,23 @@ Disassembly of section .text:
 
 0000000000401204 <fun7>:
   401204:	48 83 ec 08          	sub    $0x8,%rsp
+
   401208:	48 85 ff             	test   %rdi,%rdi
   40120b:	74 2b                	je     401238 <fun7+0x34>
+  
   40120d:	8b 17                	mov    (%rdi),%edx
   40120f:	39 f2                	cmp    %esi,%edx
   401211:	7e 0d                	jle    401220 <fun7+0x1c>
+
   401213:	48 8b 7f 08          	mov    0x8(%rdi),%rdi
   401217:	e8 e8 ff ff ff       	callq  401204 <fun7>
   40121c:	01 c0                	add    %eax,%eax
   40121e:	eb 1d                	jmp    40123d <fun7+0x39>
+
   401220:	b8 00 00 00 00       	mov    $0x0,%eax
   401225:	39 f2                	cmp    %esi,%edx
   401227:	74 14                	je     40123d <fun7+0x39>
+
   401229:	48 8b 7f 10          	mov    0x10(%rdi),%rdi
   40122d:	e8 d2 ff ff ff       	callq  401204 <fun7>
   401232:	8d 44 00 01          	lea    0x1(%rax,%rax,1),%eax
@@ -667,6 +672,7 @@ Disassembly of section .text:
   401260:	3d e8 03 00 00       	cmp    $0x3e8,%eax
   401265:	76 05                	jbe    40126c <secret_phase+0x2a>
   401267:	e8 ce 01 00 00       	callq  40143a <explode_bomb>
+
   40126c:	89 de                	mov    %ebx,%esi
   40126e:	bf f0 30 60 00       	mov    $0x6030f0,%edi
   401273:	e8 8c ff ff ff       	callq  401204 <fun7>
