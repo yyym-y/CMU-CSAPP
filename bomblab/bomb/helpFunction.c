@@ -7,47 +7,46 @@ void phase_1(input) {
     return ;
 }
 // rdi, rsi
-int string_not_equal(char* rdi, char* rsi) {
-    char* rbx = rdi; char* rbp = rsi;
+int string_not_equal(void* rdi, void* rsi) {
+    void* rbx = rdi; void* rbp = rsi;
     int len1 = string_length(rdi);
     int len2 = string_length(rdi);
     if(len1 != len2)
         return 1;
 
-    char rax = *rbx;
-    if(rax == 0) return 1;
-    if(rax != *rbp) return 1;
+    int rax = *(int*)(rbx);
+    int al = rax & 0xFF;
+
+    if(al == 0) return 1;
+    if(al != *(int*)rbp) return 1;
     
     do {
         rbx ++; rbp ++;
-        rax = *rbx;
-        if(rax != 0 && rax != *rbp)
+        rax = *(int*)rbx;
+        al = rax & 0xFF;
+        if(al != 0 && al != *(int*)rbp)
             return 1;
-    }while (rax != 0);
+    }while (al != 0);
 
     return 0;
-
 }
 
-int string_length(char* input) {
-    if(*input == 0)
+int string_length(void* rdi) {
+    if(*(int*)rdi == 0)
         return 0;
-    
-    int result;
-    char* rdx = input;
-
+    int rax;
+    void* rdx = rdi;
     do {
         rdx += 1;
-        result = rdx - input;
-    } while (*rdx != 0);
-
-    return result;
+        rax = rdx - rdi;
+    } while (*(int*)rdx != 0);
+    return rax;
 }
 
-void phase_2(input) {
+void phase_2(rdi) {
     void* rsp;
-    int a, b, c, d, e, f;
-    read_six_number(?, rsp);
+    void* rsi = rsp;
+    read_six_number(rdi, rsi);
     
     if (*((int*)rsp) != 1)
         explode_bomb();
@@ -56,9 +55,9 @@ void phase_2(input) {
     void* rbp = rsp + 24;
     
     do {
-        int eax = *((int*)(rbx - 4));
-        eax *= 2;
-        if(eax != *((int*)rbx))
+        int rax = *((int*)(rbx - 4));
+        rax *= 2;
+        if(rax != *((int*)rbx))
             explode_bomb();
         rbx += 4;
     } while (rbp != rbx);
@@ -287,12 +286,12 @@ void phase_6(input) {
     }
 }
 
-void phase_6(input) {
+void phase_6(rdi) {
     void* rsp;
     void* r13 = rsp;
     void* rsi = rsp;
     // 六个数字分别在 rsi, rsi + 4, rsi + 8, rsi + 12, rsi + 16, rsi + 20,
-    read_six_number(?, rsi);
+    read_six_number(rdi, rsi);
     void* r14 = rsp; 
     int r12d = 0;
     while (r12d != 6) {
