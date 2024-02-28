@@ -1,0 +1,21 @@
+// touch1 in 0x4017c0
+// getbuf in 0x4017a8
+// test in 0x401968
+// hexmatch in 0x40184c
+// str in 0x5561dc78
+
+int volidate(int edi) {
+    if(edi != *(0x6044dc)) {
+        put("\nMismatched validation levels");
+        check_fail();
+        return 0;
+    }
+    int edx = *(0x6044d8);
+    if(edi != edx) {
+        printf("\nCheck level %d != attack level %d\n");
+        return 0;
+    }
+    long edx = *(0x605108);
+    printf("....") // 48 C7 C0 D2 44 ....
+    return 
+}

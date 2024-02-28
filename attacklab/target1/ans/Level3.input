@@ -1,0 +1,14 @@
+
+Level3.o：     文件格式 elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <.text>:
+   0:	48 c7 c0 d2 44 60 00 	mov    $0x6044d2,%rax
+   7:	48 c7 c2 e8 44 60 00 	mov    $0x6044e8,%rdx
+   e:	48 c7 02 01 00 00 00 	movq   $0x1,(%rdx)
+  15:	48 c7 00 03 00 00 00 	movq   $0x3,(%rax)
+  1c:	b8 01 00 00 00       	mov    $0x1,%eax
+  21:	68 16 19 40 00       	pushq  $0x401916
+  26:	c3                   	retq   
